@@ -12,7 +12,11 @@ RUN apt-get update && \
         build-essential \
         wget \
         gnupg \
-        pkg-config
+        pkg-config \
+        cppcheck \
+        gdb \
+        valgrind \
+        ninja-build
 
 # Install CMake.
 ARG CMAKE_VERSION
@@ -59,9 +63,9 @@ WORKDIR /tmp/
 
 # Install vcpkg.
 ARG VCPKG_VERSION
-ADD https://github.com/microsoft/vcpkg/archive/refs/tags/${VCPKG_VERSION}.tar.gz /tmp/vcpkg-${VCPKG_VERSION}.tar.gz
-RUN tar -zxvf /tmp/vcpkg-${VCPKG_VERSION}.tar.gz -C /opt/ && \
-    chown vscode: /opt/vcpkg-${VCPKG_VERSION}/ && \
+RUN git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg-${VCPKG_VERSION}/ && \
+    git -C /opt/vcpkg-${VCPKG_VERSION}/ reset --hard tags/${VCPKG_VERSION} && \
+    chown -R vscode: /opt/vcpkg-${VCPKG_VERSION}/ && \
     /opt/vcpkg-${VCPKG_VERSION}/bootstrap-vcpkg.sh && \
     ln -s /opt/vcpkg-${VCPKG_VERSION}/vcpkg /usr/bin/vcpkg && \
     vcpkg integrate zsh
@@ -83,5 +87,5 @@ RUN rm -rf /tmp/*
 USER vscode
 
 RUN vcpkg install \
-        fmt \
-        range-v3
+    fmt \
+    range-v3
