@@ -44,7 +44,9 @@ RUN chmod +x /tmp/llvm.sh && \
     update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_VERSION} ${CLANG_VERSION} && \
     update-alternatives --set c++ /usr/bin/clang++ && \
     apt-get -y install clang-tidy-${CLANG_VERSION} && \
-    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${CLANG_VERSION} ${CLANG_VERSION}
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${CLANG_VERSION} ${CLANG_VERSION} && \
+    apt-get -y install clang-format-${CLANG_VERSION} && \
+    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${CLANG_VERSION} ${CLANG_VERSION}
 
 # Install python.
 ARG PY_MAJOR_VERSION
