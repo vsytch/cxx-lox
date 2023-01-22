@@ -74,9 +74,6 @@ RUN git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg-${VCPKG_VERSION}
     vcpkg integrate zsh
 ENV VCPKG_ROOT="/opt/vcpkg-${VCPKG_VERSION}"
 
-# Install cmake-init.
-RUN pip3 install cmake-init
-
 RUN git clone https://github.com/NVIDIA/stdexec.git /usr/src/stdexec && \
     cmake -S /usr/src/stdexec/ -B /tmp/stdexec/build/ && \
     cmake --build /tmp/stdexec/build/ --target install
@@ -85,10 +82,3 @@ COPY ./scripts/dump_cpp_env.sh /usr/bin/
 
 # Cleanup install artifacts.
 RUN rm -rf /tmp/*
-
-# Below install only library dependecies.
-USER vscode
-
-RUN vcpkg install \
-    fmt \
-    range-v3

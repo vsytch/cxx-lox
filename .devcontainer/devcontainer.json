@@ -26,8 +26,9 @@
 		"vscode": {
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				"ms-vscode.cpptools",
-				"ms-vscode.cmake-tools"
+				"llvm-vs-code-extensions.vscode-clangd",
+				"ms-vscode.cmake-tools",
+				"ms-vscode.cpptools"
 			]
 		}
 	},

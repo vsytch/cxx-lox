@@ -7,4 +7,4 @@ cmake --version
 gcc -v
 clang -v
 python3 --version
-vcpkg list
+vcpkg version

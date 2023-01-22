@@ -1,0 +1,12 @@
+{
+  "name": "cxx-init",
+  "version-semver": "1.0.0",
+  "dependencies": [
+    {
+      "name": "fmt"
+    },
+    {
+      "name": "range-v3"
+    }
+  ]
+}
