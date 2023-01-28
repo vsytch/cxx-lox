@@ -27,7 +27,7 @@ RUN chmod +x /tmp/cmake-${CMAKE_VERSION}-linux-x86_64.sh && \
 # Install libstdc++.
 ARG GCC_VERSION
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get -y install gcc-12 g++-12 && \
+    apt-get -y install gcc-${GCC_VERSION} g++-${GCC_VERSION} && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} ${GCC_VERSION} && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} ${GCC_VERSION}
 
@@ -82,6 +82,11 @@ RUN git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg-${VCPKG_VERSION}
     vcpkg integrate zsh
 ENV VCPKG_ROOT="/opt/vcpkg-${VCPKG_VERSION}"
 
+# https://wg21.link/p2168
+ADD https://raw.githubusercontent.com/lewissbaker/generator/main/include/__generator.hpp /usr/include/c++/${GCC_VERSION}/generator
+RUN chown vscode: /usr/include/c++/${GCC_VERSION}/generator
+
+# http://wg21.link/p2300
 RUN git clone https://github.com/NVIDIA/stdexec.git /usr/src/stdexec && \
     cmake -S /usr/src/stdexec/ -B /tmp/stdexec/build/ && \
     cmake --build /tmp/stdexec/build/ --target install
