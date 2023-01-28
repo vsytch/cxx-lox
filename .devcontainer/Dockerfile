@@ -49,6 +49,14 @@ RUN chmod +x /tmp/llvm.sh && \
     update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${CLANG_VERSION} ${CLANG_VERSION} && \
     update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-${CLANG_VERSION} ${CLANG_VERSION}
 
+# Install mold.
+ARG MOLD_VERSION
+ARG MOLD_MINOR_VERSION
+ARG MOLD_PATCH_VERSION
+ADD https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-x86_64-linux.tar.gz /tmp/
+RUN tar -zxvf /tmp/mold-${MOLD_VERSION}-x86_64-linux.tar.gz -C /usr/ --strip-components=1 && \
+    update-alternatives --install /usr/bin/ld ld /usr/bin/ld.mold 888
+
 # Install python.
 ARG PY_MAJOR_VERSION
 ARG PY_MINOR_VERSION
@@ -59,7 +67,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 ADD https://www.python.org/ftp/python/${PY_MAJOR_VERSION}.${PY_MINOR_VERSION}/Python-${PY_MAJOR_VERSION}.${PY_MINOR_VERSION}.tgz /tmp/
 RUN tar -zxvf /tmp/Python-${PY_MAJOR_VERSION}.${PY_MINOR_VERSION}.tgz -C /tmp/
 WORKDIR /tmp/Python-${PY_MAJOR_VERSION}.${PY_MINOR_VERSION}/
-RUN ./configure --prefix=/usr/ --enable-optimizations --with-lto && \
+RUN ./configure --prefix=/usr/ --enable-optimizations && \
     make -j && \
     make -j install
 WORKDIR /tmp/
