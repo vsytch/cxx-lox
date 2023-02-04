@@ -95,3 +95,5 @@ COPY ./scripts/dump_cpp_env.sh /usr/bin/
 
 # Cleanup install artifacts.
 RUN rm -rf /tmp/*
+
+LABEL org.opencontainers.image.source=https://github.com/vsytch/cxx-init
