@@ -6,6 +6,9 @@
       "name": "fmt"
     },
     {
+      "name": "magic-enum"
+    },
+    {
       "name": "range-v3"
     }
   ]
