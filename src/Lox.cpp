@@ -1,3 +1,4 @@
+#include "Ast.hpp"
 #include "Lox.hpp"
 #include "Scanner.hpp"
 #include "TokenType.hpp"

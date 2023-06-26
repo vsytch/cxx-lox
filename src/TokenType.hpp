@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Object.hpp"
+
 #include <fmt/core.h>
 #include <magic_enum.hpp>
 
@@ -61,15 +63,8 @@ enum class TokenType: std::uint8_t {
 struct Token {
   TokenType type = {};
   std::string lexeme = {};
-  /*Object*/ void* literal = {};
+  Object literal = {};
   std::size_t line = {};
-
-  operator std::string() const {
-    using namespace fmt;
-    using namespace magic_enum;
-
-    return format("{} {} {}", enum_name(type), lexeme, "Object object");
-  }
 };
 }
 
@@ -83,7 +78,8 @@ struct formatter<lox::Token> {
 
   template<typename FormatContext>
   auto format(const lox::Token& token, FormatContext& ctx) const {
-    return format_to(ctx.out(), "{}", std::string(token));
+    using namespace magic_enum;
+    return format_to(ctx.out(), "{} {} {}", enum_name(token.type), token.lexeme, token.literal);
   }
 };
 }
