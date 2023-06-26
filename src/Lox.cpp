@@ -1,5 +1,6 @@
 #include "Ast.hpp"
 #include "Lox.hpp"
+#include "Parser.hpp"
 #include "Scanner.hpp"
 #include "TokenType.hpp"
 
@@ -10,25 +11,39 @@
 #include <iostream>
 
 namespace lox {
-auto report(std::size_t line, std::string where, std::string message) -> void {
+auto report(std::size_t line, const std::string& where, const std::string& message) -> void {
   using namespace fmt;
 
-  print("[line {}] Error {}: {}", line, where, message);
+  print("[line {}] Error {}: {}\n", line, where, message);
   hadError = true;
 }
 
-auto error(std::size_t line, std::string message) -> void {
+auto error(const Token& token, const std::string& message) -> void {
+  using enum TokenType;
+
+  if (token.type == LOX_EOF) {
+    report(token.line, " at end", message);
+  } else {
+    report(token.line, " at '" + token.lexeme + "'", message);
+  }
+}
+
+auto error(std::size_t line, const std::string& message) -> void {
   report(line, "", message);
 }
 
-auto run(std::string source) -> void {
+auto run(const std::string& source) -> void {
   using namespace fmt;
   using namespace lox;
 
   auto&& scanner = Scanner{source};
   auto&& tokens = scanner.scanTokens();
+  auto&& parser = Parser{tokens};
+  auto&& expression = parser.parse();
 
-  print("{}\n", join(tokens, ", "));
+  if (hadError) return;
+
+  print("{}\n", expression);
 }
 
 auto runPrompt() -> void {

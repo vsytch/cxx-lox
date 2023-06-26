@@ -1,23 +1,25 @@
 #pragma once
 
-#include "TokenType.hpp"
 #include "Object.hpp"
+#include "TokenType.hpp"
 
+#include <boost/hana/functional/overload.hpp>
 #include <fmt/format.h>
 
 #include <memory>
 #include <variant>
 
 namespace lox {
-struct Binary;   using BinaryRef   = std::unique_ptr<Binary>;
-struct Grouping; using GroupingRef = std::unique_ptr<Grouping>;
-struct Literal;  using LiteralRef  = std::unique_ptr<Literal>;
-struct Unary;    using UnaryRef    = std::unique_ptr<Unary>;
+struct Binary;
+struct Grouping;
+struct Literal;
+struct Unary;
 using Expr = std::variant<
-  BinaryRef,
-  GroupingRef,
-  LiteralRef,
-  UnaryRef
+  std::monostate,
+  std::unique_ptr<Binary>,
+  std::unique_ptr<Grouping>,
+  std::unique_ptr<Literal>,
+  std::unique_ptr<Unary>
 >;
 
 struct Binary {
@@ -50,12 +52,17 @@ struct formatter<lox::Expr> {
 
   template<typename FormatContext>
   auto format(const lox::Expr& expression, FormatContext& ctx) const {
-    return format_to(ctx.out(), "{}", std::visit(cxx::match{
-      [](const lox::BinaryRef& expr) { return fmt::format("({} {} {})", expr->op.lexeme, expr->left, expr->right); },
-      [](const lox::GroupingRef& expr) { return fmt::format("(group {})", expr->expression); },
-      [](const lox::LiteralRef& expr) { return fmt::format("{}", expr->value); },
-      [](const lox::UnaryRef& expr) { return fmt::format("({} {})", expr->op.lexeme, expr->right); }
-    }, expression));
+    using namespace boost::hana;
+    using namespace lox;
+    using namespace std;
+
+    return format_to(ctx.out(), "{}", visit(overload(
+      [](std::monostate) { return "nil"s; },
+      [](const unique_ptr<Binary>& expr) { return fmt::format("({} {} {})", expr->op.lexeme, expr->left, expr->right); },
+      [](const unique_ptr<Grouping>& expr) { return fmt::format("(group {})", expr->expression); },
+      [](const unique_ptr<Literal>& expr) { return fmt::format("{}", expr->value); },
+      [](const unique_ptr<Unary>& expr) { return fmt::format("({} {})", expr->op.lexeme, expr->right); }
+    ), expression));
   }
 };
 }

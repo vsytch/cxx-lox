@@ -1,23 +1,17 @@
 #pragma once
 
+#include <boost/hana/functional/overload.hpp>
 #include <fmt/format.h>
 
-#include <optional>
 #include <string>
 #include <variant>
-
-namespace cxx {
-template<typename... Ts>
-struct match : Ts... { using Ts::operator()...; };
-template<typename... Ts>
-match(Ts...) -> match<Ts...>;
-}
 
 namespace lox {
 using Object = std::variant<
   std::monostate,
   double,
-  std::string
+  std::string,
+  bool
 >;
 }
 
@@ -31,13 +25,15 @@ struct formatter<lox::Object> {
 
   template<typename FormatContext>
   auto format(const lox::Object& obj, FormatContext& ctx) const {
+    using namespace boost::hana;
     using namespace std;
 
-    return format_to(ctx.out(), "{}", visit(cxx::match{
+    return format_to(ctx.out(), "{}", visit(overload(
       [](std::monostate) { return "nil"s; },
       [](const double val) { return fmt::format("{}", val); },
-      [](const std::string& val) { return val; }
-    }, obj));
+      [](const string& val) { return val; },
+      [](const bool val) { return fmt::format("{}", val); }
+    ), obj));
   }
 };
 }
