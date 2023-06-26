@@ -5,9 +5,11 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 #include "Lox.hpp"
+#include "Object.hpp"
 #include "TokenType.hpp"
 
 namespace lox {
@@ -41,13 +43,13 @@ struct Scanner {
     return source[current++];
   }
 
-  auto addToken(TokenType type, /*Object*/ void* literal) -> void {
+  auto addToken(TokenType type, Object literal) -> void {
     auto&& text = source.substr(start, current - start);
     tokens.push_back(Token{type, text, literal, line});
   }
 
   auto addToken(TokenType type) -> void {
-    addToken(type, nullptr);
+    addToken(type, std::monostate{});
   }
 
   auto scanToken() -> void {
@@ -168,7 +170,7 @@ struct Scanner {
       scanToken();
     }
 
-    tokens.push_back(Token{LOX_EOF, "", nullptr, line});
+    tokens.push_back(Token{LOX_EOF, "clrf", std::monostate{}, line});
     return tokens;
   }
 
@@ -187,7 +189,7 @@ struct Scanner {
 
     auto&& value = double{};
     std::from_chars(source.c_str() + start, source.c_str() + current, value);
-    addToken(NUMBER, &value);
+    addToken(NUMBER, value);
   }
 
   auto string() -> void {
@@ -207,7 +209,7 @@ struct Scanner {
 
     // Trim the surrounding quotes.
     auto&& value = source.substr(start + 1, (current - 1) - (start + 1));
-    addToken(STRING, /*Object*/ &value);
+    addToken(STRING, value);
   }
 };
 }
