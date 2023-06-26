@@ -8,9 +8,11 @@ project(
     LANGUAGES CXX
 )
 
+find_package(Boost REQUIRED)
 find_package(fmt REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 
 add_executable(main src/main.cpp)
-target_link_libraries(main PRIVATE fmt::fmt magic_enum::magic_enum range-v3)
+target_include_directories(main PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(main PRIVATE ${Boost_LIBRARIES} fmt::fmt magic_enum::magic_enum range-v3)

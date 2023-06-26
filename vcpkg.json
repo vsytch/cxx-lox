@@ -3,6 +3,9 @@
   "version-semver": "1.0.0",
   "dependencies": [
     {
+      "name": "boost"
+    },
+    {
       "name": "fmt"
     },
     {
