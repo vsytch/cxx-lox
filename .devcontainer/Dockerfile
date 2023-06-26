@@ -13,9 +13,6 @@ RUN apt-get update && \
         wget \
         gnupg \
         pkg-config \
-        cppcheck \
-        gdb \
-        valgrind \
         ninja-build
 
 # Install CMake.
@@ -92,6 +89,18 @@ RUN git clone https://github.com/NVIDIA/stdexec.git /usr/src/stdexec && \
     cmake --build /tmp/stdexec/build/ --target install
 
 COPY ./scripts/dump_cpp_env.sh /usr/bin/
+
+# Debugging tools.
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y install \
+        cppcheck \
+        gdb \
+        valgrind
+
+# TAB completion.
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y install \
+        bash-completion
 
 # Cleanup install artifacts.
 RUN rm -rf /tmp/*
