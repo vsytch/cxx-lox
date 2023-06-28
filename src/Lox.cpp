@@ -1,4 +1,5 @@
 #include "Ast.hpp"
+#include "Interpreter.hpp"
 #include "Lox.hpp"
 #include "Parser.hpp"
 #include "Scanner.hpp"
@@ -32,9 +33,15 @@ auto error(std::size_t line, const std::string& message) -> void {
   report(line, "", message);
 }
 
+auto runtimeError(const RuntimeError& error) -> void {
+  using namespace fmt;
+
+  print("{} \n[line {} ]", error.what(), error.token.line);
+  hadRuntimeError = true;
+}
+
 auto run(const std::string& source) -> void {
   using namespace fmt;
-  using namespace lox;
 
   auto&& scanner = Scanner{source};
   auto&& tokens = scanner.scanTokens();
@@ -44,6 +51,7 @@ auto run(const std::string& source) -> void {
   if (hadError) return;
 
   print("{}\n", expression);
+  interpret(expression);
 }
 
 auto runPrompt() -> void {
@@ -77,8 +85,7 @@ auto runFile(char* path) -> void {
   fs >> source;
 
   run(source);
-  if (hadError) {
-    exit(65);
-  }
+  if (hadError) exit(65);
+  if (hadRuntimeError) exit(70);
 }
 }

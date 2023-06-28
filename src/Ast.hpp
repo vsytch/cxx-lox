@@ -3,9 +3,10 @@
 #include "Object.hpp"
 #include "TokenType.hpp"
 
-#include <boost/hana/functional/overload.hpp>
+#include <boost/hana/functional/overload_linearly.hpp>
 #include <fmt/format.h>
 
+#include <functional>
 #include <memory>
 #include <variant>
 
@@ -56,7 +57,7 @@ struct formatter<lox::Expr> {
     using namespace lox;
     using namespace std;
 
-    return format_to(ctx.out(), "{}", visit(overload(
+    return format_to(ctx.out(), "{}", visit(overload_linearly(
       [](std::monostate) { return "nil"s; },
       [](const unique_ptr<Binary>& expr) { return fmt::format("({} {} {})", expr->op.lexeme, expr->left, expr->right); },
       [](const unique_ptr<Grouping>& expr) { return fmt::format("(group {})", expr->expression); },
