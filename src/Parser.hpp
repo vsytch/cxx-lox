@@ -37,7 +37,7 @@ struct Parser {
     using enum TokenType;
 
     auto&& expr = comparison();
-    while (match({BANG_EQUAL, EQUAL_EQUAL})) {
+    while (match<BANG_EQUAL, EQUAL_EQUAL>()) {
       auto&& op = previous();
       auto&& right = comparison();
       expr = make_unique<Binary>(std::move(expr), std::move(op), std::move(right));
@@ -50,7 +50,7 @@ struct Parser {
     using enum TokenType;
 
     auto&& expr = term();
-    while (match({GREATER, GREATER_EQUAL, LESS, LESS_EQUAL})) {
+    while (match<GREATER, GREATER_EQUAL, LESS, LESS_EQUAL>()) {
       auto&& op = previous();
       auto&& right = term();
       expr = make_unique<Binary>(std::move(expr), std::move(op), std::move(right));
@@ -63,7 +63,7 @@ struct Parser {
     using enum TokenType;
 
     auto&& expr = factor();
-    while (match({MINUS, PLUS})) {
+    while (match<MINUS, PLUS>()) {
       auto&& op = previous();
       auto&& right = factor();
       expr = make_unique<Binary>(std::move(expr), std::move(op), std::move(right));
@@ -76,7 +76,7 @@ struct Parser {
     using enum TokenType;
 
     auto&& expr = unary();
-    while (match({SLASH, STAR})) {
+    while (match<SLASH, STAR>()) {
       auto&& op = previous();
       auto&& right = unary();
       expr = make_unique<Binary>(std::move(expr), std::move(op), std::move(right));
@@ -88,7 +88,7 @@ struct Parser {
   auto unary() -> Expr {
     using enum TokenType;
 
-    if (match({BANG, MINUS})) {
+    if (match<BANG, MINUS>()) {
       auto&& op = previous();
       auto&& right = unary();
       return make_unique<Unary>(std::move(op), std::move(right));
@@ -101,15 +101,15 @@ struct Parser {
     using enum TokenType;
     using namespace std;
 
-    if (match({FALSE})) return make_unique<Literal>(false);
-    if (match({TRUE})) return make_unique<Literal>(true);
-    if (match({NIL})) return make_unique<Literal>(monostate{});
+    if (match<FALSE>()) return make_unique<Literal>(false);
+    if (match<TRUE>()) return make_unique<Literal>(true);
+    if (match<NIL>()) return make_unique<Literal>(monostate{});
 
-    if (match({NUMBER, STRING})) {
+    if (match<NUMBER, STRING>()) {
       return make_unique<Literal>(std::move(previous().literal));
     }
 
-    if (match({LEFT_PAREN})) {
+    if (match<LEFT_PAREN>()) {
       auto&& expr = expression();
       consume(RIGHT_PAREN, "Expect ')' after expression.");
       return make_unique<Grouping>(std::move(expr));
@@ -118,12 +118,11 @@ struct Parser {
     throw error(peek(), "Expect expression.");
   }
 
-  auto match(const std::vector<TokenType>& types) -> bool {
-    for (auto&& type: types) {
-      if (check(type)) {
-        advance();
-        return true;
-      }
+  template<TokenType... types>
+  auto match() -> bool {
+    if ((check(types) || ...)) {
+      advance();
+      return true;
     }
 
     return false;
