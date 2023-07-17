@@ -1,9 +1,9 @@
 ARG UBUNTU_VERSION
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-${UBUNTU_VERSION}
 
-# Install environment.
 USER root
 
+# Install build environment.
 RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get -y install \
@@ -14,6 +14,18 @@ RUN apt-get update && \
         gnupg \
         pkg-config \
         ninja-build
+
+# Debugging tools.
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y install \
+        cppcheck \
+        gdb \
+        valgrind
+
+# TAB completion.
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y install \
+        bash-completion
 
 # Install CMake.
 ARG CMAKE_VERSION
@@ -73,10 +85,15 @@ WORKDIR /tmp/
 ARG VCPKG_VERSION
 RUN git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg-${VCPKG_VERSION}/ && \
     git -C /opt/vcpkg-${VCPKG_VERSION}/ reset --hard tags/${VCPKG_VERSION} && \
-    chown -R vscode: /opt/vcpkg-${VCPKG_VERSION}/ && \
     /opt/vcpkg-${VCPKG_VERSION}/bootstrap-vcpkg.sh && \
     ln -s /opt/vcpkg-${VCPKG_VERSION}/vcpkg /usr/bin/vcpkg && \
-    vcpkg integrate zsh
+    vcpkg integrate zsh && \
+    vcpkg install --clean-after-build \
+        boost \
+        fmt \
+        magic-enum \
+        range-v3 && \
+    chown -R vscode: /opt/vcpkg-${VCPKG_VERSION}/
 ENV VCPKG_ROOT="/opt/vcpkg-${VCPKG_VERSION}"
 
 # https://wg21.link/p2168
@@ -89,18 +106,6 @@ RUN git clone https://github.com/NVIDIA/stdexec.git /usr/src/stdexec && \
     cmake --build /tmp/stdexec/build/ --target install
 
 COPY ./scripts/dump_cpp_env.sh /usr/bin/
-
-# Debugging tools.
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get -y install \
-        cppcheck \
-        gdb \
-        valgrind
-
-# TAB completion.
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get -y install \
-        bash-completion
 
 # Cleanup install artifacts.
 RUN rm -rf /tmp/*
