@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <memory>
-#include <stdexcept>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -19,18 +18,104 @@ struct Parser {
   std::vector<lox::Token> tokens = {};
   std::size_t current = {};
 
-  auto parse() -> Expr {
+  auto parse() -> std::vector<Stmt> {
     using namespace std;
 
-    try {
-      return expression();
-    } catch (const ParseError&) {
-      return monostate{};
+    auto&& statements = vector<Stmt>{};
+    while (!isAtEnd()) {
+      statements.push_back(declaration());
     }
+
+    return statements;
   }
 
   auto expression() -> Expr {
-    return equality();
+    return assignment();
+  }
+
+  auto declaration() -> Stmt {
+    using enum TokenType;
+
+    try {
+      if (match<VAR>()) return varDeclaration();
+      return statement();
+    } catch (const ParseError& err) {
+      synchronize();
+      return std::monostate{};
+    }
+  }
+
+  auto statement() -> Stmt {
+    using enum TokenType;
+    using namespace std;
+
+    if (match<PRINT>()) return printStatement();
+    if (match<LEFT_BRACE>()) return make_unique<Block>(block());
+
+    return expressionStatement();
+  }
+
+  auto printStatement() -> Stmt {
+    using enum TokenType;
+
+    auto&& value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
+    return make_unique<Print>(std::move(value));
+  }
+
+  auto varDeclaration() -> Stmt {
+    using enum TokenType;
+
+    auto&& name = consume(IDENTIFIER, "Expect variable name.");
+
+    auto&& initializer = Expr{std::monostate{}};
+    if (match<EQUAL>()) {
+      initializer = expression();
+    }
+
+    consume(SEMICOLON, "Expect ';' after variable declaration.");
+    return std::make_unique<Var>(std::move(name), std::move(initializer));
+  }
+
+  auto expressionStatement() -> Stmt {
+    using enum TokenType;
+    
+    auto&& expr = expression();
+    consume(SEMICOLON, "Expect ';' after expression.");
+    return make_unique<Expression>(std::move(expr));
+  }
+
+  auto block() -> std::vector<Stmt> {
+    using enum TokenType;
+    using namespace std;
+
+    auto statements = vector<Stmt>{};
+    while (!check(RIGHT_BRACE) && !isAtEnd()) {
+      statements.push_back(declaration());
+    }
+
+    consume(RIGHT_BRACE, "Expect '}' after block.");
+    return statements;
+  }
+
+  auto assignment() -> Expr {
+    using enum TokenType;
+    using namespace std;
+
+    auto&& expr = equality();
+
+    if (match<EQUAL>()) {
+      auto&& equals = previous();
+      auto&& value = assignment();
+
+      if (auto&& var = get_if<std::unique_ptr<Variable>>(&expr)) {
+        return make_unique<Assign>(std::move((*var)->name), std::move(value));
+      }
+
+      error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
   }
 
   auto equality() -> Expr {
@@ -109,6 +194,10 @@ struct Parser {
       return make_unique<Literal>(std::move(previous().literal));
     }
 
+    if (match<IDENTIFIER>()) {
+      return make_unique<Variable>(previous());
+    }
+
     if (match<LEFT_PAREN>()) {
       auto&& expr = expression();
       consume(RIGHT_PAREN, "Expect ')' after expression.");
@@ -163,7 +252,7 @@ struct Parser {
     return {};
   }
 
-  auto syncrhonize() -> void {
+  auto synchronize() -> void {
     using enum TokenType;
 
     advance();

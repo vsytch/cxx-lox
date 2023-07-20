@@ -7,9 +7,11 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 namespace lox {
 auto report(std::size_t line, const std::string& where, const std::string& message) -> void {
@@ -46,12 +48,14 @@ auto run(const std::string& source) -> void {
   auto&& scanner = Scanner{source};
   auto&& tokens = scanner.scanTokens();
   auto&& parser = Parser{tokens};
-  auto&& expression = parser.parse();
+  auto&& statements = parser.parse();
 
   if (hadError) return;
 
-  print("{}\n", expression);
-  interpret(expression);
+  print("{}\n", statements);
+
+  auto&& interpreter = Interpreter{};
+  interpreter.interpret(statements);
 }
 
 auto runPrompt() -> void {
@@ -81,8 +85,9 @@ auto runFile(char* path) -> void {
     return;
   }
 
-  auto&& source = string{};
-  fs >> source;
+  auto&& strStream = stringstream{};
+  strStream << fs.rdbuf();
+  auto&& source = strStream.str();
 
   run(source);
   if (hadError) exit(65);

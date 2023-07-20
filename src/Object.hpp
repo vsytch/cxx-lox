@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/hana/functional/overload_linearly.hpp>
+#include <boost/hana/functional/overload.hpp>
 #include <fmt/format.h>
 
 #include <string>
@@ -28,7 +28,8 @@ struct formatter<lox::Object> {
     using namespace boost::hana;
     using namespace std;
 
-    return format_to(ctx.out(), "{}", visit(overload_linearly(
+    // Cannot use overload_linearly() due to implicit double <-> bool conversion.
+    return format_to(ctx.out(), "{}", visit(overload(
       [](std::monostate) { return "nil"s; },
       [](const double val) { return fmt::format("{}", val); },
       [](const string& val) { return val; },
