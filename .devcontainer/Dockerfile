@@ -13,7 +13,9 @@ RUN apt-get update && \
         wget \
         gnupg \
         pkg-config \
-        ninja-build
+        ninja-build \
+        autoconf \
+        autoconf-archive
 
 # Debugging tools.
 RUN export DEBIAN_FRONTEND=noninteractive && \
