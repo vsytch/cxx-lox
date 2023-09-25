@@ -3,12 +3,18 @@ FROM mcr.microsoft.com/devcontainers/base:ubuntu-${UBUNTU_VERSION}
 
 USER root
 
-# Install build environment.
-RUN apt-get update && \
-    export DEBIAN_FRONTEND=noninteractive && \
+# Prepare installation environment.
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
     apt-get -y install \
         lsb-release \
-        software-properties-common \
+        software-properties-common && \
+    add-apt-repository ppa:ubuntu-toolchain-r/test && \
+    apt-get update
+
+# Install build environment.
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y install \
         build-essential \
         wget \
         gnupg \
@@ -104,6 +110,7 @@ RUN chown vscode: /usr/include/c++/${GCC_VERSION}/generator
 
 # http://wg21.link/p2300
 RUN git clone https://github.com/NVIDIA/stdexec.git /usr/src/stdexec && \
+    git -C /usr/src/stdexec checkout ${STDEXEC_VERSION} && \
     cmake -S /usr/src/stdexec/ -B /tmp/stdexec/build/ && \
     cmake --build /tmp/stdexec/build/ --target install
 
