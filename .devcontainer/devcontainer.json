@@ -4,13 +4,14 @@
 		"dockerfile": "Dockerfile",
 		"args": {
 			"UBUNTU_VERSION": "22.04",
-			"CMAKE_VERSION": "3.27.4",
-			"GCC_VERSION": "12",
-			"CLANG_VERSION": "16",
-			"MOLD_VERSION": "2.1.0",
+			"CMAKE_VERSION": "3.27.6",
+			"GCC_VERSION": "13",
+			"CLANG_VERSION": "17",
+			"MOLD_VERSION": "2.2.0",
 			"PY_MAJOR_VERSION": "3.11",
 			"PY_MINOR_VERSION": "5",
-			"VCPKG_VERSION": "2023.08.09"
+			"VCPKG_VERSION": "2023.08.09",
+			"STDEXEC_VERSION": "nvhpc-23.09.rc4"
 		}
 	},
 	"runArgs": [
