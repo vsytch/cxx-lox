@@ -28,7 +28,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -y install \
         cppcheck \
         gdb \
-        valgrind
+        valgrind \
+        iwyu
 
 # TAB completion.
 RUN export DEBIAN_FRONTEND=noninteractive && \

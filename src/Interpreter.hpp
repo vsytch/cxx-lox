@@ -115,6 +115,8 @@ struct Interpreter {
           case STAR:
             checkNumberOperands(expr->op, left, right);
             return get<double>(left) * get<double>(right);
+          default:
+            break;
         }
 
         return monostate{};
@@ -129,6 +131,8 @@ struct Interpreter {
             return !isTruthy(right);
           case MINUS:
             return -get<double>(right);
+          default:
+            break;
         }
 
         return monostate{};
@@ -167,19 +171,19 @@ struct Interpreter {
     ), statement);
   }
 
-  auto executeBlock(const std::vector<Stmt>& statements, std::shared_ptr<Environment> environment) -> void {
+  auto executeBlock(const std::vector<Stmt>& statements, std::shared_ptr<Environment> next) -> void {
     using namespace std;
 
-    auto&& previous = make_shared<Environment>(this->environment);
+    auto&& previous = make_shared<Environment>(environment);
     try {
-      this->environment = environment;
+      environment = next;
 
       for (auto&& statement: statements) {
         execute(statement);
       }
     } catch (...) {}
 
-    this->environment = previous;
+    environment = previous;
   }
 
   auto interpret(const std::vector<Stmt>& statements) -> void {

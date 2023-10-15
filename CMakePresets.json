@@ -22,7 +22,7 @@
       "name": "cppcheck",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CPPCHECK": "cppcheck;--enable=all"
+        "CMAKE_CXX_CPPCHECK": "cppcheck;--enable=all;--suppress=missingIncludeSystem"
       }
     },
     {
@@ -30,6 +30,13 @@
       "hidden": true,
       "cacheVariables": {
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--header-filter=^${sourceDir}/"
+      }
+    },
+    {
+      "name": "iwyu",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_INCLUDE_WHAT_YOU_USE": "include-what-you-use"
       }
     },
     {
@@ -55,6 +62,7 @@
         "vcpkg",
         "cppcheck",
         "clang-tidy",
+        "iwyu",
         "std",
         "unix"
       ],
