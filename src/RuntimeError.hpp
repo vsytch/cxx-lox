@@ -3,14 +3,15 @@
 #include "TokenType.hpp"
 
 #include <stdexcept>
+#include <utility>
 
 namespace lox {
 struct RuntimeError: std::runtime_error {
   Token token = {};
 
-  RuntimeError(const Token& token, const std::string& what):
+  RuntimeError(Token token, const std::string& what):
     std::runtime_error(what),
-    token(token)
+    token(std::move(token))
   {}
 };
 }

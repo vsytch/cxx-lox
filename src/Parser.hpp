@@ -269,6 +269,8 @@ struct Parser {
         case VAR:
         case WHILE:
           return;
+        default:
+          break;
       }
     }
   
