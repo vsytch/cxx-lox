@@ -1,6 +1,6 @@
-#pragma once
+module;
 
-#include "Object.hpp"
+import Object;
 
 #include <fmt/core.h>
 #include <magic_enum.hpp>
@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <string>
 
+export module TokenType;
+
+export
 namespace lox {
 enum class TokenType: std::uint8_t {
   // Single-character tokens.
@@ -68,6 +71,7 @@ struct Token {
 };
 }
 
+export
 namespace fmt {
 template<>
 struct formatter<lox::Token> {

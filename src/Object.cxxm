@@ -1,11 +1,15 @@
-#pragma once
+module;
 
 #include <boost/hana/functional/overload.hpp>
+#include <fmt/core.h>
 #include <fmt/format.h>
 
 #include <string>
 #include <variant>
 
+export module Object;
+
+export
 namespace lox {
 using Object = std::variant<
   std::monostate,
@@ -15,6 +19,7 @@ using Object = std::variant<
 >;
 }
 
+export
 namespace fmt {
 template<>
 struct formatter<lox::Object> {

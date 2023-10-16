@@ -1,1 +1,1 @@
-Checks: 'clang-analyzer-*,llvm-*,modernize-*,misc-*,-misc-non-private-member-variables-in-classes,-misc-no-recursion,-misc-use-anonymous-namespace,-llvm-header-guard,-llvm-namespace-comment'
+Checks: 'clang-analyzer-*,llvm-*,modernize-*,misc-*,-misc-non-private-member-variables-in-classes,-misc-no-recursion,-misc-use-anonymous-namespace,-llvm-header-guard,-llvm-namespace-comment,-clang-diagnostic-unused-command-line-argument,-misc-include-cleaner'

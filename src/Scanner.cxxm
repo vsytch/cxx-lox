@@ -1,4 +1,8 @@
-#pragma once
+module;
+
+import Lox;
+import Object;
+import TokenType;
 
 #include <charconv>
 #include <cstddef>
@@ -8,10 +12,9 @@
 #include <variant>
 #include <vector>
 
-#include "Lox.hpp"
-#include "Object.hpp"
-#include "TokenType.hpp"
+export module Scanner;
 
+export
 namespace lox {
 struct Scanner {
   inline static std::unordered_map<std::string_view, TokenType> keywords = {

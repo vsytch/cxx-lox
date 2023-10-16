@@ -19,7 +19,6 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         wget \
         gnupg \
         pkg-config \
-        ninja-build \
         autoconf \
         autoconf-archive
 
@@ -35,6 +34,11 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -y install \
         bash-completion
+
+# Install Ninja.
+ARG NINJA_VERSION
+ADD https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip /tmp/
+RUN unzip /tmp/ninja-linux.zip -d /usr/bin/
 
 # Install CMake.
 ARG CMAKE_VERSION

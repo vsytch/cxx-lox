@@ -1,8 +1,8 @@
-#pragma once
+module;
 
-#include "Ast.hpp"
-#include "Lox.hpp"
-#include "TokenType.hpp"
+import Ast;
+import Lox;
+import TokenType;
 
 #include <cstddef>
 #include <cstdio>
@@ -11,6 +11,9 @@
 #include <variant>
 #include <vector>
 
+export module Parser;
+
+export
 namespace lox {
 struct Parser {
   struct ParseError{};

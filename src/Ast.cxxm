@@ -1,7 +1,7 @@
-#pragma once
+module;
 
-#include "Object.hpp"
-#include "TokenType.hpp"
+import Object;
+import TokenType;
 
 #include <boost/hana/functional/overload_linearly.hpp>
 #include <fmt/format.h>
@@ -9,7 +9,11 @@
 
 #include <memory>
 #include <variant>
+#include <vector>
 
+export module Ast;
+
+export
 namespace lox {
 struct Assign;
 struct Binary;
@@ -85,6 +89,7 @@ struct Var {
 };
 }
 
+export
 namespace fmt {
 template<>
 struct formatter<lox::Expr> {

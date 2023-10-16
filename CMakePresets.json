@@ -60,8 +60,6 @@
       "inherits": [
         "project",
         "vcpkg",
-        "cppcheck",
-        "clang-tidy",
         "iwyu",
         "std",
         "unix"
