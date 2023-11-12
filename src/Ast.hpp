@@ -15,6 +15,7 @@ struct Assign;
 struct Binary;
 struct Grouping;
 struct Literal;
+struct Logical;
 struct Unary;
 struct Variable;
 using Expr = std::variant<
@@ -23,6 +24,7 @@ using Expr = std::variant<
   std::unique_ptr<Binary>,
   std::unique_ptr<Grouping>,
   std::unique_ptr<Literal>,
+  std::unique_ptr<Logical>,
   std::unique_ptr<Unary>,
   std::unique_ptr<Variable>
 >;
@@ -46,6 +48,12 @@ struct Literal {
   Object value;
 };
 
+struct Logical {
+  Expr left;
+  Token op;
+  Expr right;
+};
+
 struct Unary {
   Token op;
   Expr right;
@@ -57,14 +65,18 @@ struct Variable {
 
 struct Block;
 struct Expression;
+struct IfStmt;
 struct Print;
 struct Var;
+struct While;
 using Stmt = std::variant<
   std::monostate,
   std::unique_ptr<Block>,
   std::unique_ptr<Expression>,
+  std::unique_ptr<IfStmt>,
   std::unique_ptr<Print>,
-  std::unique_ptr<Var>
+  std::unique_ptr<Var>,
+  std::unique_ptr<While>
 >;
 
 struct Block {
@@ -75,6 +87,12 @@ struct Expression {
   Expr expression;
 };
 
+struct IfStmt {
+  Expr condition;
+  Stmt thenBranch;
+  Stmt elseBranch;
+};
+
 struct Print {
   Expr expression;
 };
@@ -82,6 +100,11 @@ struct Print {
 struct Var {
   Token name;
   Expr initializer;
+};
+
+struct While {
+  Expr condition;
+  Stmt body;
 };
 }
 
@@ -105,6 +128,7 @@ struct formatter<lox::Expr> {
       [](const unique_ptr<Binary>& expr) { return fmt::format("({} {} {})", expr->op.lexeme, expr->left, expr->right); },
       [](const unique_ptr<Grouping>& expr) { return fmt::format("(group {})", expr->expression); },
       [](const unique_ptr<Literal>& expr) { return fmt::format("{}", expr->value); },
+      [](const unique_ptr<Logical>& expr) { return fmt::format("({} {} {})", expr->left, expr->op, expr->right); },
       [](const unique_ptr<Unary>& expr) { return fmt::format("({} {})", expr->op.lexeme, expr->right); },
       [](const unique_ptr<Variable>& expr) { return fmt::format("(var {})", expr->name); }
     ), expression));
@@ -128,8 +152,10 @@ struct formatter<lox::Stmt> {
       [](std::monostate) { return "nil"s; },
       [](const unique_ptr<Block>& stmt) { return fmt::format("(eval {})", stmt->statements); },
       [](const unique_ptr<Expression>& stmt) { return fmt::format("(eval {})", stmt->expression); },
+      [](const unique_ptr<IfStmt>& stmt) { return fmt::format("(if ({}) else ({}))", stmt->condition, stmt->thenBranch, stmt->elseBranch); },
       [](const unique_ptr<Print>& stmt) { return fmt::format("(print {})", stmt->expression); },
-      [](const unique_ptr<Var>& stmt) { return fmt::format("(declare {} {})", stmt->name, stmt->initializer); }
+      [](const unique_ptr<Var>& stmt) { return fmt::format("(declare {} {})", stmt->name, stmt->initializer); },
+      [](const unique_ptr<While>& stmt) { return fmt::format("(while ({}) ({}))", stmt->condition, stmt->body); }
     ), statement));
   }
 };

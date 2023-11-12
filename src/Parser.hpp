@@ -35,13 +35,14 @@ struct Parser {
 
   auto declaration() -> Stmt {
     using enum TokenType;
+    using namespace std;
 
     try {
       if (match<VAR>()) return varDeclaration();
       return statement();
     } catch (const ParseError& err) {
       synchronize();
-      return std::monostate{};
+      return monostate{};
     }
   }
 
@@ -49,14 +50,83 @@ struct Parser {
     using enum TokenType;
     using namespace std;
 
+    if (match<FOR>()) return forStatement();
+    if (match<IF>()) return ifStatement();
     if (match<PRINT>()) return printStatement();
+    if (match<WHILE>()) return whileStatement();
     if (match<LEFT_BRACE>()) return make_unique<Block>(block());
 
     return expressionStatement();
   }
 
+  auto forStatement() -> Stmt {
+    using enum TokenType;
+    using namespace std;
+
+    consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+    auto&& initializer = Stmt{};
+    if (match<SEMICOLON>()) {
+      initializer = monostate{};
+    } else if (match<VAR>()) {
+      initializer = varDeclaration();
+    } else {
+      initializer = expressionStatement();
+    }
+
+    auto&& condition = Expr{};
+    if (!check(SEMICOLON)) {
+      condition = expression();
+    }
+    consume(SEMICOLON, "Expect ';' after loop condition.");
+
+    auto&& increment = Expr{};
+    if (!check(RIGHT_PAREN)) {
+      increment = expression();
+    }
+    consume(RIGHT_PAREN, "Expect ';' after for clauses.");
+    
+    auto&& body = statement();
+    if (increment != Expr{monostate{}}) {
+      auto&& tmp = vector<Stmt>{};
+      tmp.emplace_back(std::move(body));
+      tmp.emplace_back(make_unique<Expression>(std::move(increment)));
+      body = make_unique<Block>(std::move(tmp));
+    }
+
+    if (condition == Expr{monostate{}}) condition = make_unique<Literal>(true);
+    body = make_unique<While>(std::move(condition), std::move(body));
+
+    if (initializer != Stmt{monostate{}}) {
+      auto&& tmp = vector<Stmt>{};
+      tmp.emplace_back(std::move(initializer));
+      tmp.emplace_back(std::move(body));
+      body = make_unique<Block>(std::move(tmp));
+    }
+
+    return body;
+  }
+
+  auto ifStatement() -> Stmt {
+    using enum TokenType;
+    using namespace std;
+
+    consume(LEFT_PAREN, "Expect '( after 'if'.");
+    auto&& condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+    auto&& thenBranch = statement();
+    auto&& elseBranch = Stmt{};
+    if (match<ELSE>()) {
+      elseBranch = statement();
+    }
+
+    return make_unique<IfStmt>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
+  }
+
   auto printStatement() -> Stmt {
     using enum TokenType;
+    using namespace std;
 
     auto&& value = expression();
     consume(SEMICOLON, "Expect ';' after value.");
@@ -74,11 +144,24 @@ struct Parser {
     }
 
     consume(SEMICOLON, "Expect ';' after variable declaration.");
-    return std::make_unique<Var>(std::move(name), std::move(initializer));
+    return make_unique<Var>(std::move(name), std::move(initializer));
+  }
+
+  auto whileStatement() -> Stmt {
+    using enum TokenType;
+    using namespace std;
+
+    consume(LEFT_PAREN, "Expect '(' afer 'while'.");
+    auto&& condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after condition.");
+    auto&& body = statement();
+
+    return make_unique<While>(std::move(condition), std::move(body));
   }
 
   auto expressionStatement() -> Stmt {
     using enum TokenType;
+    using namespace std;
     
     auto&& expr = expression();
     consume(SEMICOLON, "Expect ';' after expression.");
@@ -91,7 +174,7 @@ struct Parser {
 
     auto statements = vector<Stmt>{};
     while (!check(RIGHT_BRACE) && !isAtEnd()) {
-      statements.push_back(declaration());
+      statements.emplace_back(declaration());
     }
 
     consume(RIGHT_BRACE, "Expect '}' after block.");
@@ -102,7 +185,7 @@ struct Parser {
     using enum TokenType;
     using namespace std;
 
-    auto&& expr = equality();
+    auto&& expr = disjunction();
 
     if (match<EQUAL>()) {
       auto&& equals = previous();
@@ -113,6 +196,36 @@ struct Parser {
       }
 
       error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
+  }
+
+  auto disjunction() -> Expr {
+    using enum TokenType;
+    using namespace std;
+
+    auto&& expr = conjuction();
+
+    while (match<OR>()) {
+      auto&& op = previous();
+      auto&& right = conjuction();
+      expr = make_unique<Logical>(std::move(expr), std::move(op), std::move(right));
+    }
+
+    return expr;
+  }
+
+  auto conjuction() -> Expr {
+    using enum TokenType;
+    using namespace std;
+
+    auto&& expr = equality();
+
+    while (match<AND>()) {
+      auto&& op = previous();
+      auto&& right = equality();
+      expr = make_unique<Logical>(std::move(expr), std::move(op), std::move(right));
     }
 
     return expr;

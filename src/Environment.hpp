@@ -30,7 +30,8 @@ struct Environment {
     using namespace fmt;
 
     if (values.contains(name.lexeme)) {
-      values.insert({name.lexeme, value});
+      values[name.lexeme] = value;
+      return;
     }
 
     if (enclosing) {

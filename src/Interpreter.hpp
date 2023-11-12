@@ -123,6 +123,17 @@ struct Interpreter {
       },
       [this](const unique_ptr<Grouping>& expr) -> Object { return evaluate(expr->expression); },
       [](const unique_ptr<Literal>& expr) -> Object { return expr->value; },
+      [this](const unique_ptr<Logical>& expr) -> Object {
+        auto&& left = evaluate(expr->left);
+
+        if (expr->op.type == OR) {
+          if (isTruthy(left)) return left;
+        } else {
+          if (!isTruthy(left)) return left;
+        }
+
+        return evaluate(expr->right);
+      },
       [this](const unique_ptr<Unary>& expr) -> Object {
         auto&& right = evaluate(expr->right);
 
@@ -156,17 +167,29 @@ struct Interpreter {
       [this](const unique_ptr<Expression>& stmt) {
         evaluate(stmt->expression);
       },
+      [this](const unique_ptr<IfStmt>& stmt) {
+        if (isTruthy(evaluate(stmt->condition))) {
+          execute(stmt->thenBranch);
+        } else if (stmt->elseBranch != Stmt{monostate{}}) {
+          execute(stmt->elseBranch);
+        }
+      },
       [this](const unique_ptr<Print>& stmt) {
         auto&& value = evaluate(stmt->expression);
         fmt::print("{}\n", value);
       },
       [this](const unique_ptr<Var>& stmt) {
         auto&& value = Object{};
-        if (stmt->initializer != Expr{std::monostate{}}) {
+        if (stmt->initializer != Expr{monostate{}}) {
           value = evaluate(stmt->initializer);
         }
 
         environment->define(stmt->name.lexeme, value);
+      },
+      [this](const unique_ptr<While>& stmt) {
+        while (isTruthy(evaluate(stmt->condition))) {
+          execute(stmt->body);
+        }
       }
     ), statement);
   }
