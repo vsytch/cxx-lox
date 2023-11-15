@@ -3,6 +3,10 @@
 #include "Ast.hpp"
 #include "Environment.hpp"
 #include "Lox.hpp"
+#include "LoxCallable.hpp"
+#include "LoxFunction.hpp"
+#include "Object.hpp"
+#include "Return.hpp"
 #include "RuntimeError.hpp"
 
 #include <boost/hana/functional/overload_linearly.hpp>
@@ -13,7 +17,8 @@
 
 namespace lox {
 struct Interpreter {
-  std::shared_ptr<Environment> environment = std::make_shared<Environment>();
+  std::shared_ptr<Environment> globals = std::make_shared<Environment>();
+  std::shared_ptr<Environment> environment = globals;
 
   auto isTruthy(const Object& object) -> bool {
     using namespace boost::hana;
@@ -58,6 +63,10 @@ struct Interpreter {
       [](double, double) { return; },
       [op](auto&&, auto&&) { throw RuntimeError{op, "Operands must be numbers."}; }
     ), left, right);
+  }
+
+  auto call(LoxCallable* callable, std::vector<Object>& arguments) -> Object {
+    using namespace std;    
   }
 
   auto evaluate(const Expr& expression) -> Object {
@@ -121,6 +130,27 @@ struct Interpreter {
 
         return monostate{};
       },
+      [this](const unique_ptr<Call>& expr) -> Object {
+        using namespace fmt;
+        using namespace std;
+        
+        auto&& callee = evaluate(expr->callee);
+
+        auto&& arguments = vector<Object>{};
+        for (auto&& argument: expr->arguments) {
+          arguments.emplace_back(evaluate(argument));
+        }
+
+        // auto&& function = get<unique_ptr<LoxCallable>>(callee);
+        // if (!function) {
+        //   throw RuntimeError(expr->paren, "Can only call functions and classes.");
+        // }
+        // if (arguments.size() != function->arity()) {
+        //   throw RuntimeError(expr->paren, format("Expected {} arguments but got {}.", function->arity(), arguments.size()));
+        // }
+
+        // return function->call(*this, std::move(arguments));
+      },
       [this](const unique_ptr<Grouping>& expr) -> Object { return evaluate(expr->expression); },
       [](const unique_ptr<Literal>& expr) -> Object { return expr->value; },
       [this](const unique_ptr<Logical>& expr) -> Object {
@@ -167,6 +197,12 @@ struct Interpreter {
       [this](const unique_ptr<Expression>& stmt) {
         evaluate(stmt->expression);
       },
+      [this](const unique_ptr<Function>& stmt) {
+        using namespace std;
+
+        auto&& function = make_unique<LoxFunction>(stmt.get(), environment);
+        environment->define(stmt->name.lexeme, std::move(function));
+      },
       [this](const unique_ptr<IfStmt>& stmt) {
         if (isTruthy(evaluate(stmt->condition))) {
           execute(stmt->thenBranch);
@@ -178,13 +214,21 @@ struct Interpreter {
         auto&& value = evaluate(stmt->expression);
         fmt::print("{}\n", value);
       },
+      [this](const unique_ptr<Return>& stmt) {
+        using namespace std;
+
+        auto&& value = Object{};
+        if (stmt->value != Expr{monostate{}}) value = evaluate(stmt->value);
+
+        throw ReturnException{std::move(value)};
+      },
       [this](const unique_ptr<Var>& stmt) {
         auto&& value = Object{};
         if (stmt->initializer != Expr{monostate{}}) {
           value = evaluate(stmt->initializer);
         }
 
-        environment->define(stmt->name.lexeme, value);
+        environment->define(stmt->name.lexeme, std::move(value));
       },
       [this](const unique_ptr<While>& stmt) {
         while (isTruthy(evaluate(stmt->condition))) {

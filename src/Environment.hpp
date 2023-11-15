@@ -14,7 +14,7 @@ struct Environment {
   std::shared_ptr<Environment> enclosing;
   std::unordered_map<std::string, Object> values;
 
-  auto get(Token name) -> Object {
+  auto get(const Token& name) -> Object {
     using namespace fmt;
 
     if (values.contains(name.lexeme)) {

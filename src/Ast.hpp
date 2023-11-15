@@ -13,6 +13,7 @@
 namespace lox {
 struct Assign;
 struct Binary;
+struct Call;
 struct Grouping;
 struct Literal;
 struct Logical;
@@ -22,6 +23,7 @@ using Expr = std::variant<
   std::monostate,
   std::unique_ptr<Assign>,
   std::unique_ptr<Binary>,
+  std::unique_ptr<Call>,
   std::unique_ptr<Grouping>,
   std::unique_ptr<Literal>,
   std::unique_ptr<Logical>,
@@ -38,6 +40,12 @@ struct Binary {
   Expr left;
   Token op;
   Expr right;
+};
+
+struct Call {
+  Expr callee;
+  Token paren;
+  std::vector<Expr> arguments;
 };
 
 struct Grouping {
@@ -65,16 +73,20 @@ struct Variable {
 
 struct Block;
 struct Expression;
+struct Function;
 struct IfStmt;
 struct Print;
+struct Return;
 struct Var;
 struct While;
 using Stmt = std::variant<
   std::monostate,
   std::unique_ptr<Block>,
   std::unique_ptr<Expression>,
+  std::unique_ptr<Function>,
   std::unique_ptr<IfStmt>,
   std::unique_ptr<Print>,
+  std::unique_ptr<Return>,
   std::unique_ptr<Var>,
   std::unique_ptr<While>
 >;
@@ -87,6 +99,12 @@ struct Expression {
   Expr expression;
 };
 
+struct Function {
+  Token name;
+  std::vector<Token> params;
+  std::vector<Stmt> body;
+};
+
 struct IfStmt {
   Expr condition;
   Stmt thenBranch;
@@ -95,6 +113,11 @@ struct IfStmt {
 
 struct Print {
   Expr expression;
+};
+
+struct Return {
+  Token keyword;
+  Expr value;
 };
 
 struct Var {
@@ -126,6 +149,7 @@ struct formatter<lox::Expr> {
       [](std::monostate) { return "nil"s; },
       [](const unique_ptr<Assign>& expr) { return fmt::format("(assign {} {})", expr->name, expr->value); },
       [](const unique_ptr<Binary>& expr) { return fmt::format("({} {} {})", expr->op.lexeme, expr->left, expr->right); },
+      [](const unique_ptr<Call>& expr) { return fmt::format("(call {} {} {})", expr->callee, expr->paren.lexeme, expr->arguments); },
       [](const unique_ptr<Grouping>& expr) { return fmt::format("(group {})", expr->expression); },
       [](const unique_ptr<Literal>& expr) { return fmt::format("{}", expr->value); },
       [](const unique_ptr<Logical>& expr) { return fmt::format("({} {} {})", expr->left, expr->op, expr->right); },

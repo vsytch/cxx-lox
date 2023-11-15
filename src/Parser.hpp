@@ -38,6 +38,7 @@ struct Parser {
     using namespace std;
 
     try {
+      if (match<FUN>()) return function("function");
       if (match<VAR>()) return varDeclaration();
       return statement();
     } catch (const ParseError& err) {
@@ -53,6 +54,7 @@ struct Parser {
     if (match<FOR>()) return forStatement();
     if (match<IF>()) return ifStatement();
     if (match<PRINT>()) return printStatement();
+    if (match<RETURN>()) return returnStatement();
     if (match<WHILE>()) return whileStatement();
     if (match<LEFT_BRACE>()) return make_unique<Block>(block());
 
@@ -133,6 +135,20 @@ struct Parser {
     return make_unique<Print>(std::move(value));
   }
 
+  auto returnStatement() -> Stmt {
+    using enum TokenType;
+    using namespace std;
+
+    auto&& keyword = previous();
+    auto&& value = Expr{};
+    if (!check(SEMICOLON)) {
+      value = expression();
+    }
+
+    consume(SEMICOLON, "Expect ';' after return value.");
+    return make_unique<Return>(std::move(keyword), std::move(value));
+  }
+
   auto varDeclaration() -> Stmt {
     using enum TokenType;
 
@@ -166,6 +182,28 @@ struct Parser {
     auto&& expr = expression();
     consume(SEMICOLON, "Expect ';' after expression.");
     return make_unique<Expression>(std::move(expr));
+  }
+
+  auto function(std::string_view kind) -> std::unique_ptr<Function> {
+    using enum TokenType;
+    using namespace fmt;
+    using namespace std;
+
+    auto&& name = consume(IDENTIFIER, format("Expect {} name.", kind));
+    consume(LEFT_PAREN, format("Expect '(' after {} name.", kind));
+    auto&& parameters = vector<Token>{};
+    if (!check(RIGHT_PAREN)) {
+      do {
+        if (parameters.size() >= 255) {
+          error(peek(), "Can't have more than 255 parameters.");
+        }
+        parameters.emplace_back(consume(IDENTIFIER, "Expect parameter name."));
+      } while (match<COMMA>());
+    }
+    consume(RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(LEFT_BRACE, format("Expect '{{' before {} body.", kind));
+    auto&& body = block();
+    return make_unique<Function>(std::move(name), std::move(parameters), std::move(body));
   }
 
   auto block() -> std::vector<Stmt> {
@@ -292,7 +330,40 @@ struct Parser {
       return make_unique<Unary>(std::move(op), std::move(right));
     }
 
-    return primary();
+    return call();
+  }
+
+  auto finishCall(Expr&& callee) -> Expr {
+    using enum TokenType;
+    using namespace std;
+
+    auto&& arguments = vector<Expr>{};
+    if (!check(RIGHT_PAREN)) {
+      do {
+        if (arguments.size() >= 255) {
+          error(peek(), "Can't have more than 255 arguments.");
+        }
+        arguments.emplace_back(expression());
+      } while (match<COMMA>());
+    }
+
+    auto&& paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+
+    return make_unique<Call>(std::move(callee), std::move(paren), std::move(arguments));
+  }
+
+  auto call() -> Expr {
+    using enum TokenType;
+
+    auto&& expr = primary();
+
+    while (true) {
+      if (match<LEFT_PAREN>()) {
+        expr = finishCall(std::move(expr));
+      } else {
+        break;
+      }
+    }
   }
 
   auto primary() -> Expr {
